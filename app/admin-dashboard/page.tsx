@@ -1,34 +1,66 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { useAuth } from "@/lib/auth-context"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { LogOut, Users, Zap, TrendingUp, Settings, FileText, X } from "lucide-react"
-import { SolarShareLogo } from "@/components/logo"
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  LogOut,
+  Users,
+  Zap,
+  TrendingUp,
+  Settings,
+  FileText,
+  X,
+} from "lucide-react";
+import { SolarShareLogo } from "@/components/logo";
+
+// 🔥 Firestore Imports (for EV charging requests)
+import { db } from "@/lib/firebaseConfig";
+import { collection, onSnapshot } from "firebase/firestore";
 
 export default function AdminDashboard() {
-  const { user, logout, isLoading } = useAuth()
-  const router = useRouter()
-  const [showLogs, setShowLogs] = useState(false)
+  const { user, logout, isLoading } = useAuth();
+  const router = useRouter();
+  const [showLogs, setShowLogs] = useState(false);
 
+  // 🧠 New state for EV requests
+  const [requests, setRequests] = useState<any[]>([]);
+
+  // ✅ Real-time Firestore listener
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, "ev_charging_requests"), (snapshot) => {
+      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      setRequests(data);
+    });
+    return () => unsub();
+  }, []);
+
+  // 🔒 Protect Admin Route
   useEffect(() => {
     if (!isLoading && (!user || user.role !== "admin")) {
-      router.push("/login")
+      router.push("/login");
     }
-  }, [user, isLoading, router])
+  }, [user, isLoading, router]);
 
   const handleLogout = () => {
-    logout()
-    router.push("/")
-  }
+    logout();
+    router.push("/");
+  };
 
   if (isLoading || !user) {
-    return <div className="flex items-center justify-center h-screen">Loading...</div>
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
 
+  // 🔧 System Logs (existing)
   const systemLogs = [
     {
       id: 1,
@@ -60,7 +92,13 @@ export default function AdminDashboard() {
       details: "₹1245.50",
       status: "success",
     },
-    { id: 5, timestamp: "2025-01-10 14:50:15", action: "System Backup Started", user: "system", status: "processing" },
+    {
+      id: 5,
+      timestamp: "2025-01-10 14:50:15",
+      action: "System Backup Started",
+      user: "system",
+      status: "processing",
+    },
     {
       id: 6,
       timestamp: "2025-01-10 15:02:48",
@@ -84,7 +122,7 @@ export default function AdminDashboard() {
       details: "98.2%",
       status: "success",
     },
-  ]
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/10">
@@ -105,7 +143,12 @@ export default function AdminDashboard() {
               <p className="text-sm font-semibold text-foreground">{user.name}</p>
               <p className="text-xs text-muted-foreground">{user.email}</p>
             </div>
-            <Button variant="outline" size="sm" onClick={handleLogout} className="gap-2 bg-transparent">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLogout}
+              className="gap-2 bg-transparent"
+            >
               <LogOut className="w-4 h-4" />
               Logout
             </Button>
@@ -120,7 +163,47 @@ export default function AdminDashboard() {
           <p className="text-muted-foreground">Manage the entire SolarShare network</p>
         </div>
 
-        {/* System KPIs */}
+        {/* ⚡ NEW SECTION: Live EV Charging Requests */}
+        <Card className="mb-10 border-l-4 border-l-primary">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
+              ⚡ Live EV Charging Requests
+            </CardTitle>
+            <CardDescription>
+              See all EV charging requests submitted by vehicle owners in real time.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {requests.length === 0 ? (
+              <p className="text-muted-foreground">No EV charging requests yet.</p>
+            ) : (
+              <ul className="space-y-3">
+                {requests.map((req) => (
+                  <li
+                    key={req.id}
+                    className="p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="font-semibold">{req.user}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {req.vehicle} — {req.charger_type}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {req.time?.seconds
+                            ? new Date(req.time.seconds * 1000).toLocaleString()
+                            : new Date().toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Existing Dashboard Sections */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card className="border-l-4 border-l-primary">
             <CardHeader className="pb-3">
@@ -298,6 +381,7 @@ export default function AdminDashboard() {
         </div>
       </main>
 
+      {/* System Logs Modal */}
       {showLogs && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <Card className="w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
@@ -313,7 +397,10 @@ export default function AdminDashboard() {
             <CardContent className="overflow-y-auto flex-1">
               <div className="space-y-3 py-4">
                 {systemLogs.map((log) => (
-                  <div key={log.id} className="border border-border rounded-lg p-3 hover:bg-muted/50 transition-colors">
+                  <div
+                    key={log.id}
+                    className="border border-border rounded-lg p-3 hover:bg-muted/50 transition-colors"
+                  >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
@@ -323,8 +410,8 @@ export default function AdminDashboard() {
                               log.status === "success"
                                 ? "bg-green-100 text-green-800"
                                 : log.status === "pending"
-                                  ? "bg-yellow-100 text-yellow-800"
-                                  : "bg-blue-100 text-blue-800"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-blue-100 text-blue-800"
                             }`}
                           >
                             {log.status}
@@ -332,7 +419,11 @@ export default function AdminDashboard() {
                         </div>
                         <p className="text-xs text-muted-foreground">User: {log.user}</p>
                         <p className="text-xs text-muted-foreground">{log.timestamp}</p>
-                        {log.details && <p className="text-xs text-muted-foreground mt-1">Details: {log.details}</p>}
+                        {log.details && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Details: {log.details}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -343,5 +434,5 @@ export default function AdminDashboard() {
         </div>
       )}
     </div>
-  )
+  );
 }

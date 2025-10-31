@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { LogOut, Sun, Zap, TrendingUp, Home, Clock, CheckCircle, XCircle } from "lucide-react"
 import { SolarShareLogo } from "@/components/logo"
+import { db } from "@/lib/firebaseConfig"
+import { collection, addDoc } from "firebase/firestore"
 
 export default function UserDashboard() {
   const {
@@ -45,6 +47,22 @@ export default function UserDashboard() {
     requestPayoutFromAdmin(user.id, 3390)
     setShowPayoutModal(true)
     setTimeout(() => setShowPayoutModal(false), 3000)
+  }
+
+  // 🚗 Function to submit EV charging request
+  async function submitChargingRequest(data: any) {
+    try {
+      await addDoc(collection(db, "ev_charging_requests"), {
+        user: data.user,
+        vehicle: data.vehicle,
+        charger_type: data.charger_type,
+        time: new Date(),
+      })
+      alert("Request submitted successfully!")
+    } catch (e) {
+      console.error("Error submitting request: ", e)
+      alert("Error submitting request. Check console.")
+    }
   }
 
   const handleDismissNotification = (notificationId: string) => {
@@ -237,6 +255,52 @@ export default function UserDashboard() {
             </Button>
           </Link>
         </div>
+
+        {/* === START: EV Charging Request Form (ADDED) === */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Request EV Charging</CardTitle>
+            <CardDescription>Submit your EV charging request to the admin</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                const form = e.target as HTMLFormElement
+                const vehicle = (form.elements.namedItem("vehicle") as HTMLInputElement).value
+                const charger_type = (form.elements.namedItem("charger_type") as HTMLInputElement).value
+
+                submitChargingRequest({
+                  user: user.name,
+                  vehicle,
+                  charger_type,
+                })
+                form.reset()
+              }}
+              className="space-y-4"
+            >
+              <input
+                name="vehicle"
+                placeholder="Vehicle Model (e.g., Tata Nexon EV)"
+                className="w-full border border-gray-300 rounded-lg p-2"
+                required
+              />
+              <select
+                name="charger_type"
+                className="w-full border border-gray-300 rounded-lg p-2"
+                required
+              >
+                <option value="">Select Charger Type</option>
+                <option value="AC">AC Charger</option>
+                <option value="DC">DC Fast Charger</option>
+              </select>
+              <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
+                Submit Request
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+        {/* === END: EV Charging Request Form (ADDED) === */}
 
         {/* Info Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
