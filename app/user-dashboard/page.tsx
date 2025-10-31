@@ -50,20 +50,23 @@ export default function UserDashboard() {
   }
 
   // 🚗 Function to submit EV charging request
-  async function submitChargingRequest(data: any) {
-    try {
-      await addDoc(collection(db, "ev_charging_requests"), {
-        user: data.user,
-        vehicle: data.vehicle,
-        charger_type: data.charger_type,
-        time: new Date(),
-      })
-      alert("Request submitted successfully!")
-    } catch (e) {
-      console.error("Error submitting request: ", e)
-      alert("Error submitting request. Check console.")
-    }
+ // 🚗 Function to submit EV charging request
+async function submitChargingRequest(data: any) {
+  try {
+    const docRef = await addDoc(collection(db, "ev_charging_requests"), {
+      user: data.user,
+      vehicle: data.vehicle,
+      charger_type: data.charger_type,
+      time: new Date(),
+    })
+    console.log("✅ Request added successfully with ID:", docRef.id)
+    alert("Request submitted successfully!")
+  } catch (e) {
+    console.error("❌ Error submitting request: ", e)
+    alert("Error submitting request. Check console.")
   }
+}
+
 
   const handleDismissNotification = (notificationId: string) => {
     markNotificationAsRead(notificationId)

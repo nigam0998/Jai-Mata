@@ -36,13 +36,15 @@ export default function AdminDashboard() {
   const [requests, setRequests] = useState<any[]>([]);
 
   // ✅ Real-time Firestore listener
-  useEffect(() => {
-    const unsub = onSnapshot(collection(db, "ev_charging_requests"), (snapshot) => {
-      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setRequests(data);
-    });
-    return () => unsub();
-  }, []);
+ useEffect(() => {
+  const unsub = onSnapshot(collection(db, "ev_charging_requests"), (snapshot) => {
+    const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+    console.log("📡 Admin received Firestore data:", data)
+    setRequests(data)
+  })
+  return () => unsub()
+}, [])
+
 
   // 🔒 Protect Admin Route
   useEffect(() => {
