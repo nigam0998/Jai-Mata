@@ -259,51 +259,6 @@ async function submitChargingRequest(data: any) {
           </Link>
         </div>
 
-        {/* === START: EV Charging Request Form (ADDED) === */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Request EV Charging</CardTitle>
-            <CardDescription>Submit your EV charging request to the admin</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault()
-                const form = e.target as HTMLFormElement
-                const vehicle = (form.elements.namedItem("vehicle") as HTMLInputElement).value
-                const charger_type = (form.elements.namedItem("charger_type") as HTMLInputElement).value
-
-                submitChargingRequest({
-                  user: user.name,
-                  vehicle,
-                  charger_type,
-                })
-                form.reset()
-              }}
-              className="space-y-4"
-            >
-              <input
-                name="vehicle"
-                placeholder="Vehicle Model (e.g., Tata Nexon EV)"
-                className="w-full border border-gray-300 rounded-lg p-2"
-                required
-              />
-              <select
-                name="charger_type"
-                className="w-full border border-gray-300 rounded-lg p-2"
-                required
-              >
-                <option value="">Select Charger Type</option>
-                <option value="AC">AC Charger</option>
-                <option value="DC">DC Fast Charger</option>
-              </select>
-              <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
-                Submit Request
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-        {/* === END: EV Charging Request Form (ADDED) === */}
 
         {/* Info Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
